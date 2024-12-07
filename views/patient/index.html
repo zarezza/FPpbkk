@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+    <title>Golang FP CRUD</title>
+  </head>
+  <body>
+     <div class="container mt-5">
+        <h3>Patient Data</h3>
+        <a href="/patient/add" class="btn btn-sm btn-primary">Add Data</a>
+        <hr/>
+        <table class="table table-sriped table-hover">
+            <thead>
+                <tr>
+                    <th>Full Name</th>
+                    <th>Social Number</th>
+                    <th>Gender</th>
+                    <th>Birthplace</th>
+                    <th>Birthdate</th>
+                    <th>Address</th>
+                    <th>Phone Number</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+              {{ range .patient }}
+                <tr>
+                  <td>{{ .FullName }}</td>
+                  <td>{{ .SocialNumber }}</td>
+                  <td>{{ .Gender }}</td>
+                  <td>{{ .Birthplace }}</td>
+                  <td>{{ .Birthdate }}</td>
+                  <td>{{ .Address }}</td>
+                  <td>{{ .PhoneNumber}}</td>
+                  <td>
+                    <a href="/patient/edit?id={{ .Id }}" class="btn btn-sm btn-warning">Edit</a>
+                    <a href="/patient/delete?id={{ .Id }}" onclick="return confirm('Are you sure?')" class="btn btn-sm btn-danger">Delete</a>
+                  </td>
+                </tr>
+              {{ end }}
+            </tbody>
+        </table>
+     </div>
+  </body>
+</html>
