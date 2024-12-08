@@ -2,7 +2,8 @@ package main
 
 import (
 	"final-project/config"
-	controllers "final-project/controllers/BookController"
+	bookControllers "final-project/controllers/BookController"
+	userControllers "final-project/controllers/UserController"
 	"final-project/models"
 	"log"
 
@@ -17,12 +18,14 @@ func main() {
 	}
 
 	config.DBConnection()
-	config.DropTables(&models.Book{})
-	config.Migrate(&models.Book{})
+	config.DropTables(&models.Book{}, &models.User{})
+	config.Migrate(&models.Book{}, &models.User{})
 	config.Seed()
 
 	bookModel := &models.BookModel{DB: config.DB}
-	bookController := &controllers.BookController{Model: bookModel}
+	userModel := &models.UserModel{DB: config.DB}
+	bookController := &bookControllers.BookController{Model: bookModel}
+	userController := &userControllers.UserController{Model: userModel}
 
 	r := gin.Default()
 	r.LoadHTMLGlob("views/book/*")
@@ -34,6 +37,12 @@ func main() {
 	r.GET("/books/edit/:id", bookController.Edit)
 	r.POST("/books/:id", bookController.Edit)
 	r.GET("/books/delete/:id", bookController.Delete)
+
+	r.GET("/register", userController.Register)
+	r.POST("/registers", userController.Register)
+
+	r.GET("/login", userController.Login)
+	r.POST("/logins", userController.Login)
 
 	r.Run()
 }
