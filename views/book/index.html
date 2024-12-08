@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+    <title>Golang FP CRUD</title>
+  </head>
+  <body>
+     <div class="container mt-5">
+        <h3>Book Data</h3>
+        <a href="/book/add" class="btn btn-sm btn-primary">Add Data</a>
+        <hr/>
+        <table class="table table-sriped table-hover">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Publisher</th>
+                    <th>ISBN</th>
+                    <th>Year</th>
+                    <th>Category</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+              {{ range .books }}
+                <tr>
+                  <td>{{ .Title }}</td>
+                  <td>{{ .Author }}</td>
+                  <td>{{ .Publisher }}</td>
+                  <td>{{ .ISBN }}</td>
+                  <td>{{ .Year }}</td>
+                  <td>{{ .Category }}</td>
+                  <td>
+                    <a href="/book/edit?id={{ .Id }}" class="btn btn-sm btn-warning">Edit</a>
+                    <a href="/book/delete?id={{ .Id }}" onclick="return confirm('Are you sure?')" class="btn btn-sm btn-danger">Delete</a>
+                  </td>
+                </tr>
+              {{ end }}
+            </tbody>
+        </table>
+     </div>
+  </body>
+</html>
