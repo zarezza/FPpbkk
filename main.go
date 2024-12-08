@@ -1,17 +1,32 @@
 package main
 
 import (
-	patientcontroller "final-project/controllers/PatientController"
+	"final-project/config"
+	bookcontroller "final-project/controllers/BookController"
+	"fmt"
+	"log"
 	"net/http"
 )
 
 func main() {
-	http.HandleFunc("/", patientcontroller.Index)
-	http.HandleFunc("/patient", patientcontroller.Index)
-	http.HandleFunc("/patient/index", patientcontroller.Index)
-	http.HandleFunc("/patient/add", patientcontroller.Add)
-	http.HandleFunc("/patient/edit", patientcontroller.Edit)
-	http.HandleFunc("/patient/delete", patientcontroller.Delete)
+	db, err := config.DBConnection()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
 
+	err = config.MigrateAndSeed(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	http.HandleFunc("/", bookcontroller.Index)
+	http.HandleFunc("/book", bookcontroller.Index)
+	http.HandleFunc("/book/index", bookcontroller.Index)
+	http.HandleFunc("/book/add", bookcontroller.Add)
+	http.HandleFunc("/book/edit", bookcontroller.Edit)
+	http.HandleFunc("/book/delete", bookcontroller.Delete)
+
+	fmt.Println("server started at http://localhost:3000")
 	http.ListenAndServe(":3000", nil)
 }
