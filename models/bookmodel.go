@@ -1,90 +1,44 @@
 package models
 
 import (
-	"database/sql"
-	"final-project/config"
-	"final-project/entities"
-	"fmt"
+	"gorm.io/gorm"
 )
 
+type Book struct {
+	// gorm.Model
+	ID        uint   `json:"id" gorm:"primaryKey"`
+	Title     string `json:"title"`
+	Author    string `json:"author"`
+	Publisher string `json:"publisher"`
+	ISBN      string `json:"isbn"`
+	Year      int    `json:"year"`
+	Category  string `json:"category"`
+}
+
 type BookModel struct {
-	conn *sql.DB
+	DB *gorm.DB
 }
 
-func NewBookModel() *BookModel {
-	conn, err := config.DBConnection()
-	if err != nil {
-		panic(err)
-	}
-
-	return &BookModel{
-		conn: conn,
-	}
+func (m *BookModel) Create(book *Book) error {
+	return m.DB.Create(book).Error
 }
 
-func (b *BookModel) FindAll() ([]entities.Book, error) {
-	rows, err := b.conn.Query("select * from books")
-	if err != nil {
-		return []entities.Book{}, err
-	}
-	defer rows.Close()
-
-	var dataBooks []entities.Book
-	for rows.Next() {
-		var book entities.Book
-		rows.Scan(
-			&book.Id,
-			&book.Title,
-			&book.Author,
-			&book.Publisher,
-			&book.ISBN,
-			&book.Year,
-			&book.Category)
-
-		dataBooks = append(dataBooks, book)
-	}
-	return dataBooks, nil
+func (m *BookModel) Find(id uint) (*Book, error) {
+	var book Book
+	err := m.DB.First(&book, id).Error
+	return &book, err
 }
 
-func (b *BookModel) Create(book entities.Book) bool {
-	result, err := b.conn.Exec("insert into books (title, author, publisher, isbn, year, category) values(?,?,?,?,?,?)",
-		book.Title, book.Author, book.Publisher, book.ISBN, book.Year, book.Category)
-
-	if err != nil {
-		fmt.Println(err)
-		return false
-	}
-
-	lastInsertId, _ := result.LastInsertId()
-
-	return lastInsertId > 0
+func (m *BookModel) FindAll() ([]Book, error) {
+	var books []Book
+	err := m.DB.Find(&books).Error
+	return books, err
 }
 
-func (b *BookModel) Find(id int64, book *entities.Book) error {
-	return b.conn.QueryRow("select * from books where id = ?", id).Scan(
-		&book.Id,
-		&book.Title,
-		&book.Author,
-		&book.Publisher,
-		&book.ISBN,
-		&book.Year,
-		&book.Category,
-	)
+func (m *BookModel) Update(book *Book) error {
+	return m.DB.Save(book).Error
 }
 
-func (b *BookModel) Update(book entities.Book) error {
-	_, err := b.conn.Exec(
-		"update books set title=?, author=?, publisher=?, isbn=?, year=?, category=? where id=?",
-		book.Title, book.Author, book.Publisher, book.ISBN, book.Year, book.Category, book.Id,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (b *BookModel) Delete(id int64) {
-	b.conn.Exec("delete from books where id = ?", id)
+func (m *BookModel) Delete(id uint) error {
+	return m.DB.Delete(&Book{}, id).Error
 }

@@ -1,118 +1,83 @@
 package bookcontroller
 
 import (
-	"final-project/entities"
-	"final-project/libraries"
 	"final-project/models"
 	"net/http"
 	"strconv"
-	"text/template"
+
+	"github.com/gin-gonic/gin"
 )
 
-var validation = libraries.NewValidation()
+type BookController struct {
+	Model *models.BookModel
+}
 
-var bookModel = models.NewBookModel()
-
-func Index(response http.ResponseWriter, request *http.Request) {
-	books, _ := bookModel.FindAll()
-
-	data := map[string]interface{}{
-		"books": books,
-	}
-
-	temp, err := template.ParseFiles("views/book/index.html")
+func (ctrl *BookController) Index(c *gin.Context) {
+	books, err := ctrl.Model.FindAll()
 	if err != nil {
-		panic(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
-	temp.Execute(response, data)
+	c.HTML(http.StatusOK, "index.html", books)
 }
 
-func Add(response http.ResponseWriter, request *http.Request) {
-	if request.Method == http.MethodGet {
-		temp, err := template.ParseFiles("views/book/add.html")
+func (ctrl *BookController) Add(c *gin.Context) {
+	if c.Request.Method == http.MethodGet {
+		c.HTML(http.StatusOK, "add.html", nil)
+		return
+	}
+
+	var book models.Book
+	if err := c.ShouldBind(&book); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err := ctrl.Model.Create(&book); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.Redirect(http.StatusFound, "/books")
+}
+
+func (ctrl *BookController) Edit(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+		return
+	}
+
+	if c.Request.Method == http.MethodGet {
+		book, err := ctrl.Model.Find(uint(id))
 		if err != nil {
-			panic(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
 		}
-		temp.Execute(response, nil)
-	} else if request.Method == http.MethodPost {
-		request.ParseForm()
-
-		var book entities.Book
-		book.Title = request.Form.Get("title")
-		book.Author = request.Form.Get("author")
-		book.Publisher = request.Form.Get("publisher")
-		book.ISBN = request.Form.Get("isbn")
-		book.Year = request.Form.Get("year")
-		book.Category = request.Form.Get("category")
-
-		data := make(map[string]interface{})
-
-		vErrors := validation.Struct(book)
-
-		if vErrors != nil {
-			data["book"] = book
-			data["validation"] = vErrors
-		} else {
-			data["message"] = "Data is successfully stored"
-			bookModel.Create(book)
-		}
-
-		temp, _ := template.ParseFiles("views/book/add.html")
-		temp.Execute(response, data)
+		c.HTML(http.StatusOK, "edit.html", book)
+		return
 	}
+
+	var book models.Book
+	if err := c.ShouldBind(&book); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	book.ID = uint(id)
+	if err := ctrl.Model.Update(&book); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.Redirect(http.StatusFound, "/books")
 }
 
-func Edit(response http.ResponseWriter, request *http.Request) {
-	if request.Method == http.MethodGet {
-		queryString := request.URL.Query()
-		id, _ := strconv.ParseInt(queryString.Get("id"), 10, 64)
-
-		var book entities.Book
-		bookModel.Find(id, &book)
-
-		data := map[string]interface{}{
-			"book": book,
-		}
-
-		temp, err := template.ParseFiles("views/book/edit.html")
-		if err != nil {
-			panic(err)
-		}
-		temp.Execute(response, data)
-	} else if request.Method == http.MethodPost {
-		request.ParseForm()
-
-		var book entities.Book
-		book.Id, _ = strconv.ParseInt(request.Form.Get("id"), 10, 64)
-		book.Title = request.Form.Get("title")
-		book.Author = request.Form.Get("author")
-		book.Publisher = request.Form.Get("publisher")
-		book.ISBN = request.Form.Get("isbn")
-		book.Year = request.Form.Get("year")
-		book.Category = request.Form.Get("category")
-
-		data := make(map[string]interface{})
-
-		vErrors := validation.Struct(book)
-
-		if vErrors != nil {
-			data["book"] = book
-			data["validation"] = vErrors
-		} else {
-			data["message"] = "Data is successfully edited"
-			bookModel.Update(book)
-		}
-
-		temp, _ := template.ParseFiles("views/book/edit.html")
-		temp.Execute(response, data)
+func (ctrl *BookController) Delete(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+		return
 	}
-}
-
-func Delete(response http.ResponseWriter, request *http.Request) {
-	queryString := request.URL.Query()
-	id, _ := strconv.ParseInt(queryString.Get("id"), 10, 64)
-
-	bookModel.Delete(id)
-
-	http.Redirect(response, request, "/book", http.StatusSeeOther)
+	if err := ctrl.Model.Delete(uint(id)); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.Redirect(http.StatusFound, "/books")
 }
