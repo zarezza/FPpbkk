@@ -3,8 +3,11 @@ package usercontroller
 import (
 	"final-project/models"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -35,8 +38,22 @@ func (ctrl *UserController) Register(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.Redirect(http.StatusFound, "/books")
 
+	// After successful registration, create and set JWT token
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id": user.ID,
+		"exp":     time.Now().Add(time.Hour * 24).Unix(),
+	})
+
+	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate token"})
+		return
+	}
+
+	// Set the token in a cookie
+	c.SetCookie("session_token", tokenString, 3600*24, "/", "", false, true)
+	c.Redirect(http.StatusFound, "/books")
 }
 
 func (ctrl *UserController) Login(c *gin.Context) {
@@ -66,5 +83,26 @@ func (ctrl *UserController) Login(c *gin.Context) {
 		return
 	}
 
+	// Create the JWT token after successful login
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id": user.ID,
+		"exp":     time.Now().Add(time.Hour * 24).Unix(),
+	})
+
+	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate token"})
+		return
+	}
+
+	// Set the token in a cookie
+	c.SetCookie("session_token", tokenString, 3600*24, "/", "", false, true)
 	c.Redirect(http.StatusFound, "/books")
+}
+
+// Add a logout handler
+func (ctrl *UserController) Logout(c *gin.Context) {
+	// Clear the session cookie
+	c.SetCookie("session_token", "", -1, "/", "", false, true)
+	c.Redirect(http.StatusFound, "/login")
 }

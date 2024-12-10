@@ -2,6 +2,7 @@ package bookcontroller
 
 import (
 	"final-project/models"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -12,8 +13,22 @@ type BookController struct {
 	Model *models.BookModel
 }
 
+func getUserID(c *gin.Context) (uint, error) {
+	userID, exists := c.Get("userID")
+	if !exists {
+		return 0, fmt.Errorf("user not authenticated")
+	}
+	return userID.(uint), nil
+}
+
 func (ctrl *BookController) Index(c *gin.Context) {
-	books, err := ctrl.Model.FindAll()
+	userID, err := getUserID(c)
+	if err != nil {
+		c.Redirect(http.StatusFound, "/login")
+		return
+	}
+
+	books, err := ctrl.Model.FindByUser(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -22,6 +37,12 @@ func (ctrl *BookController) Index(c *gin.Context) {
 }
 
 func (ctrl *BookController) Add(c *gin.Context) {
+	userID, err := getUserID(c)
+	if err != nil {
+		c.Redirect(http.StatusFound, "/login")
+		return
+	}
+
 	if c.Request.Method == http.MethodGet {
 		c.HTML(http.StatusOK, "add.html", nil)
 		return
@@ -32,6 +53,8 @@ func (ctrl *BookController) Add(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	book.UserID = userID
 	if err := ctrl.Model.Create(&book); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -40,6 +63,12 @@ func (ctrl *BookController) Add(c *gin.Context) {
 }
 
 func (ctrl *BookController) Edit(c *gin.Context) {
+	userID, err := getUserID(c)
+	if err != nil {
+		c.Redirect(http.StatusFound, "/login")
+		return
+	}
+
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
@@ -47,7 +76,7 @@ func (ctrl *BookController) Edit(c *gin.Context) {
 	}
 
 	if c.Request.Method == http.MethodGet {
-		book, err := ctrl.Model.Find(uint(id))
+		book, err := ctrl.Model.FindByIDAndUser(uint(id), userID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -62,6 +91,8 @@ func (ctrl *BookController) Edit(c *gin.Context) {
 		return
 	}
 	book.ID = uint(id)
+	book.UserID = userID
+
 	if err := ctrl.Model.Update(&book); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -70,12 +101,19 @@ func (ctrl *BookController) Edit(c *gin.Context) {
 }
 
 func (ctrl *BookController) Delete(c *gin.Context) {
+	userID, err := getUserID(c)
+	if err != nil {
+		c.Redirect(http.StatusFound, "/login")
+		return
+	}
+
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
 	}
-	if err := ctrl.Model.Delete(uint(id)); err != nil {
+
+	if err := ctrl.Model.Delete(uint(id), userID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
