@@ -13,7 +13,7 @@ type Book struct {
 	ISBN      string `json:"isbn"`
 	Year      int    `json:"year"`
 	Category  string `json:"category"`
-	UserID    uint   `json:"user_id"` // Add this field to associate books with users
+	UserID    uint   `json:"user_id"`
 }
 
 type BookModel struct {

@@ -39,7 +39,6 @@ func (ctrl *UserController) Register(c *gin.Context) {
 		return
 	}
 
-	// After successful registration, create and set JWT token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": user.ID,
 		"exp":     time.Now().Add(time.Hour * 24).Unix(),
@@ -51,7 +50,6 @@ func (ctrl *UserController) Register(c *gin.Context) {
 		return
 	}
 
-	// Set the token in a cookie
 	c.SetCookie("session_token", tokenString, 3600*24, "/", "", false, true)
 	c.Redirect(http.StatusFound, "/books")
 }
@@ -83,7 +81,6 @@ func (ctrl *UserController) Login(c *gin.Context) {
 		return
 	}
 
-	// Create the JWT token after successful login
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": user.ID,
 		"exp":     time.Now().Add(time.Hour * 24).Unix(),
@@ -95,14 +92,11 @@ func (ctrl *UserController) Login(c *gin.Context) {
 		return
 	}
 
-	// Set the token in a cookie
 	c.SetCookie("session_token", tokenString, 3600*24, "/", "", false, true)
 	c.Redirect(http.StatusFound, "/books")
 }
 
-// Add a logout handler
 func (ctrl *UserController) Logout(c *gin.Context) {
-	// Clear the session cookie
 	c.SetCookie("session_token", "", -1, "/", "", false, true)
 	c.Redirect(http.StatusFound, "/login")
 }
