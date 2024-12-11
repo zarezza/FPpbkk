@@ -31,9 +31,10 @@ func Migrate(models ...interface{}) {
 
 func Seed() {
 	books := []models.Book{
-		{Title: "The Great Gatsby", Author: "F. Scott Fitzgerald", Publisher: "Scribner", ISBN: "9780743273565", Year: 1925, Category: "Fiction"},
-		{Title: "To Kill a Mockingbird", Author: "Harper Lee", Publisher: "J.B. Lippincott & Co.", ISBN: "9780061120084", Year: 1960, Category: "Fiction"},
-		{Title: "1984", Author: "George Orwell", Publisher: "Secker & Warburg", ISBN: "9780451524935", Year: 1949, Category: "Dystopian"},
+		{Title: "The Great Gatsby", Author: "F. Scott Fitzgerald", Publisher: "Scribner", ISBN: "9780743273565", Year: 1925, Category: "Fiction", UserID: 1},
+		{Title: "To Kill a Mockingbird", Author: "Harper Lee", Publisher: "J.B. Lippincott & Co.", ISBN: "9780061120084", Year: 1960, Category: "Fiction", UserID: 2},
+		{Title: "1984", Author: "George Orwell", Publisher: "Secker & Warburg", ISBN: "9780451524935", Year: 1949, Category: "Dystopian", UserID: 1},
+		{Title: "Dune", Author: "Frank Herbert", Publisher: "KPG", ISBN: "9786231340061", Year: 1949, Category: "Dystopian", UserID: 2},
 	}
 
 	for _, book := range books {
